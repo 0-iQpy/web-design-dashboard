@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard (Wireframe)</title>
+  <link rel="stylesheet" href="draft.css">
+
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo"></div><div><h1>Admin</h1><div style="font-size:12px;color:var(--muted)">Staff Dashboard</div></div></div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-view="orders">Orders</button>
+        <button data-view="inventory">Inventory</button>
+        <button data-view="balances">Balances</button>
+        <button data-view="payments">Payments</button>
+        <button data-view="vouches">Vouches</button>
+        <button data-view="logs">Logs</button>
+        <button data-view="settings">Settings</button>
+      </nav>
+
+      <div class="status">Shop Status<br><strong style="color:#10b981">Open</strong></div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="title"><h2>Orders</h2><p>View and manage incoming orders from Discord</p></div>
+        <div class="kpi"><div class="box"><div style="font-size:12px;color:var(--muted)">Today</div><div style="font-weight:700">₱1,350</div></div><button class="btn primary" id="newOrderBtn">New Order</button></div>
+      </div>
+
+      <div class="grid">
+        <section>
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <strong>Pending Orders</strong>
+              <div>
+                <input id="search" placeholder="Search order or ID" style="padding:8px;border-radius:8px;border:1px solid #e6e6ee">
+                <select id="filter" style="padding:8px;border-radius:8px;border:1px solid #e6e6ee;margin-left:8px"><option>All</option><option>Pending</option><option>Processing</option><option>Sent</option></select>
+              </div>
+            </div>
+
+            <div class="orders-list" id="ordersList">
+              <!-- Orders injected by JS -->
+            </div>
+            <div style="margin-top:12px;color:var(--muted);font-size:13px">Tip: Click an order to open details on the right panel</div>
+          </div>
+        </section>
+
+        <aside class="right">
+          <div class="panel block" id="orderDetail">
+            <h4 style="margin:0 0 8px 0">Order Detail</h4>
+            <div style="color:var(--muted);font-size:13px;margin-bottom:10px">Select an order to see details and actions</div>
+            <div id="detailContent">
+              <!-- Details populated by JS -->
+              <div style="color:var(--muted);font-size:14px">No order selected</div>
+            </div>
+          </div>
+
+          <div class="panel block">
+            <h4 style="margin:0 0 8px 0">Inventory Snapshot</h4>
+            <div id="invSnap"></div>
+            <div style="margin-top:8px"><button class="btn ghost">Manage Inventory</button></div>
+          </div>
+
+          <div class="panel block">
+            <h4 style="margin:0 0 8px 0">Balances</h4>
+            <div id="balSnap"></div>
+            <div style="margin-top:8px"><button class="btn ghost">Adjust Balance</button></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="lower">
+        <div class="small-item">
+          <strong>Payments</strong>
+          <div style="color:var(--muted);font-size:13px;margin-top:6px">Recent proofs waiting for review</div>
+          <div id="paymentsList" style="margin-top:8px"></div>
+        </div>
+        <div class="small-item">
+          <strong>Vouches</strong>
+          <div style="color:var(--muted);font-size:13px;margin-top:6px">Recent customer vouches</div>
+          <div id="vouchesList" style="margin-top:8px"></div>
+        </div>
+        <div class="small-item">
+          <strong>Logs</strong>
+          <div style="color:var(--muted);font-size:13px;margin-top:6px">Recent system logs & staff activity</div>
+          <div id="logsList" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+<script src="draft.js"></script>
+</body>
+</html>

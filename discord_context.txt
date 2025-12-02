@@ -1,0 +1,1579 @@
+addbal.js
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+
+const balanceFile = path.join(__dirname, 'balances.json');
+
+function loadBalances() {
+  if (!fs.existsSync(balanceFile)) {
+    fs.writeFileSync(balanceFile, JSON.stringify({}));
+  }
+  return JSON.parse(fs.readFileSync(balanceFile, 'utf8'));
+}
+
+function saveBalances(data) {
+  fs.writeFileSync(balanceFile, JSON.stringify(data, null, 2));
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('addbal')
+    .setDescription('Add money to your shop wallet')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addUserOption(option =>
+      option.setName('user')
+        .setDescription('The user to update')
+        .setRequired(true)
+    )
+    .addIntegerOption(option =>
+      option.setName('amount')
+        .setDescription('How much to add (use negative for subtract)')
+        .setRequired(true)
+    ),
+
+  async execute(interaction) {
+    const targetUser = interaction.options.getUser('user');
+    const amount = interaction.options.getInteger('amount');
+    const balances = loadBalances();
+
+    if (!balances[targetUser.id]) balances[targetUser.id] = 0;
+
+    balances[targetUser.id] += amount;
+
+    if (balances[targetUser.id] < 0) balances[targetUser.id] = 0;
+
+    saveBalances(balances);
+
+    const embed = new EmbedBuilder()
+      .setTitle("<:pinkmoon:1392690364325822505> Wallet Updated!")
+      .setDescription(`The shop wallet for ${targetUser} has been updated <:nekowave:1392691343347683449>`)
+      .addFields(
+        { name: "<:kuromicheers1:1392690387209949275> Amount Added", value: `₱${amount.toLocaleString()}`, inline: true },
+        { name: "<:pinkbasket:1392482488894488728> New Balance", value: `₱${balances[targetUser.id].toLocaleString()}`, inline: true }
+      )
+      .setColor(0xFFD1DC) // light pink
+      .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+      .setFooter({ text: "Keep shopping, keep shining 🌸" })
+      .setTimestamp();
+
+    await interaction.reply({ 
+      content: `Balance updated for ${targetUser.username}`, 
+      ephemeral: true 
+    });
+
+    await interaction.channel.send({ embeds: [embed] });
+  },
+};
+
+------
+
+additem.js
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+
+const inventoryFile = path.join(__dirname, "inventory.json");
+
+function loadInventory() {
+  if (!fs.existsSync(inventoryFile)) {
+    fs.writeFileSync(inventoryFile, JSON.stringify([]));
+  }
+  return JSON.parse(fs.readFileSync(inventoryFile, "utf8"));
+}
+
+function saveInventory(data) {
+  fs.writeFileSync(inventoryFile, JSON.stringify(data, null, 2));
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName("additem")
+    .setDescription("Add a new item to the shop inventory")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addStringOption(option =>
+      option.setName("name")
+        .setDescription("Name of the item")
+        .setRequired(true)
+    )
+    .addIntegerOption(option =>
+      option.setName("price")
+        .setDescription("Price of the item")
+        .setRequired(true)
+    )
+    .addIntegerOption(option =>
+      option.setName("stock")
+        .setDescription("How many items are in stock")
+        .setRequired(true)
+    ),
+
+  async execute(interaction) {
+    const name = interaction.options.getString("name");
+    const price = interaction.options.getInteger("price");
+    const stock = interaction.options.getInteger("stock");
+
+    const inventory = loadInventory();
+
+    inventory.push({ name, price, stock });
+    saveInventory(inventory);
+
+    const embed = new EmbedBuilder()
+      .setTitle("<a:Pink_bow1:1405809198821806171> Item Added!")
+      .setColor(0xA7F3D0)
+      .setDescription(`Added **${name}** to the shop inventory.`)
+      .addFields(
+        { name: "<:pinkkiss:1393037246629941248> Price", value: `₱${price}`, inline: true },
+        { name: "<:pinkbasket:1392482488894488728> Stock", value: `${stock}`, inline: true }
+      )
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  },
+};
+
+------
+
+bal.js
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+
+const balanceFile = path.join(__dirname, 'balances.json');
+
+function loadBalances() {
+  if (!fs.existsSync(balanceFile)) {
+    fs.writeFileSync(balanceFile, JSON.stringify({}));
+  }
+  return JSON.parse(fs.readFileSync(balanceFile, 'utf8'));
+}
+
+function saveBalances(data) {
+  fs.writeFileSync(balanceFile, JSON.stringify(data, null, 2));
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('bal')
+    .setDescription('Check your nbasket wallet balance!'),
+
+  async execute(interaction) {
+    const userId = interaction.user.id;
+    const balances = loadBalances();
+
+    if (!balances[userId]) {
+      balances[userId] = 0;
+      saveBalances(balances);
+    }
+
+    const balance = balances[userId];
+
+    const embed = new EmbedBuilder()
+      .setTitle("<:sakurabow:1392690375709167738> Wallet Balance")
+      .setDescription(`<@${userId}>! Here’s your current balance <:sakurapanda:1392482295050670191>`)
+      .addFields({ name: "Baskie Balance", value: `₱${balance.toLocaleString()}`, inline: true })
+      .setColor(0xFFC0CB)
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+      .setFooter({ text: "Save up and buy something, cutie" })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  },
+};
+
+------
+
+balances.json
+{
+  "718779924059521075": 0,
+  "1200431534969212940": 0
+}
+
+------
+
+close.js
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('close')
+        .setDescription('Sends the closing message'),
+    async execute(interaction) {
+        await interaction.reply({ 
+            content: 'Sending closed message...', 
+            ephemeral: true 
+        });
+
+        await interaction.channel.send(
+            `_ _
+## nifei basket is now closed ! <a:pinkzzz:1392482465762775090>
+all order and inquiries that
+are made while the shop is
+closed will be processed &
+answered tomorrow. <:skullangry:1392690780182679764>
+
+
+you can still drop your orders but
+expect  late  reply  and tomorrow
+process <:kuromisleep:1392690358084698275> 
+
+
+          おやすみなさい <:thinkingheart:1392691335940538449>
+
+                    ⋅˚₊‧ ୨୧ ‧₊˚ ⋅
+_ _`
+        );
+    },
+};
+
+------
+
+confirm.js
+
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('confirm')
+        .setDescription('Sends payment confirmation message'),
+    async execute(interaction) {
+
+        await interaction.reply({ 
+            content: 'payment confirmed!', 
+            ephemeral: true 
+        });
+
+
+        await interaction.channel.send({
+            content: `## <a:nif_pinkverify:1392690355974963301>  — payment received !
+track your order status <#1325000933792550914> 
+
+<:no:1392690399465705542> no rush orders pls | usual eta : mins - one day unless stated
+<:yes:1392690367190798398> kindly wait for us patiently to process your order
+
+<:kuromilaying:1392482497245352019> **thank you for shopping at n.basket** `,
+        });
+    },
+};
+
+------
+
+delitem.js
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+
+const inventoryFile = path.join(__dirname, "inventory.json");
+
+function loadInventory() {
+  if (!fs.existsSync(inventoryFile)) {
+    fs.writeFileSync(inventoryFile, JSON.stringify([]));
+  }
+  return JSON.parse(fs.readFileSync(inventoryFile, "utf8"));
+}
+
+function saveInventory(data) {
+  fs.writeFileSync(inventoryFile, JSON.stringify(data, null, 2));
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName("removeitem")
+    .setDescription("Remove an item from the shop inventory")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addIntegerOption(option =>
+      option.setName("index")
+        .setDescription("The item number from /inv (e.g. 1, 2, 3...)")
+        .setRequired(true)
+    ),
+
+  async execute(interaction) {
+    const index = interaction.options.getInteger("index") - 1;
+    const inventory = loadInventory();
+
+    if (index < 0 || index >= inventory.length) {
+      return interaction.reply({
+        content: "Invalid item number. Use `/inv` to check item numbers.",
+        ephemeral: true,
+      });
+    }
+
+    const removedItem = inventory.splice(index, 1)[0];
+    saveInventory(inventory);
+
+    const embed = new EmbedBuilder()
+      .setTitle("🗑️ Item Removed")
+      .setColor(0xFCA5A5)
+      .setDescription(`Removed **${removedItem.name}** from the shop inventory.`)
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  },
+};
+
+------
+
+inventory.js
+
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+
+const inventoryFile = path.join(__dirname, "inventory.json");
+
+function loadInventory() {
+  if (!fs.existsSync(inventoryFile)) {
+    fs.writeFileSync(inventoryFile, JSON.stringify([]));
+  }
+  return JSON.parse(fs.readFileSync(inventoryFile, "utf8"));
+}
+
+function saveInventory(data) {
+  fs.writeFileSync(inventoryFile, JSON.stringify(data, null, 2));
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName("inv")
+    .setDescription("View the shop's inventory!"),
+
+  async execute(interaction) {
+    const inventory = loadInventory();
+
+    if (inventory.length === 0) {
+      return interaction.reply({
+        content: "<:nekosob:1392690772616286360> The shop is empty right now~ Please come back later!",
+        ephemeral: true,
+      });
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle("<:nekowave:1392691343347683449> Shop Inventory")
+      .setColor(0xF9A8D4)
+      .setDescription("Here are the items available today, happy shopping~")
+      .setThumbnail(interaction.client.user.displayAvatarURL())
+      .setTimestamp();
+
+    inventory.forEach((item, index) => {
+      embed.addFields({
+        name: `<:PinkDeco:1405809175644344390>${index + 1} ${item.name}`,
+        value: `<:sakurabow:1392690375709167738>Price: ₱${item.price}       <:pinkbasket:1392482488894488728> Stock: ${item.stock}`,
+        inline: false,
+      });
+    });
+
+    await interaction.reply({ embeds: [embed] });
+  },
+};
+
+------
+
+inventory.js
+[]
+
+------
+
+logs.js
+const { 
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+} = require('discord.js');
+
+const userChannels = {
+  '1200431534969212940': '1386518174966480916', // winwin
+  '1394253638771413095': '1395918172183597147', // pen
+  '1190548292984111137': '1386518242310488075', // madi
+  '1358389056773423255': '1396298222502150346', // ocean
+  '783297607421394955': '1383772227471675485', // yuro
+  '1414730545681662033': '1276009144008179785', // bella
+}; 
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('attendance')
+    .setDescription('Sign in/out buttons for staff'),
+
+  async execute(interaction) {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('sign_in').setLabel('Sign In').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('sign_out').setLabel('Sign Out').setStyle(ButtonStyle.Danger)
+    );
+
+    await interaction.reply({ content: 'Staffie attendance', components: [row] });
+
+    const collector = interaction.channel.createMessageComponentCollector();
+
+    collector.on('collect', async i => {
+      if (i.user.bot || !i.isButton()) return;
+
+      const action = i.customId === 'sign_in' ? 'in' : 'out';
+      const channelId = userChannels[i.user.id];
+
+      if (!channelId) {
+        return i.reply({ content: 'No channel assigned to you!', ephemeral: true });
+      }
+
+      const targetChannel = await i.guild.channels.fetch(channelId).catch(() => null);
+      if (!targetChannel) return i.reply({ content: 'Assigned channel not found!', ephemeral: true });
+
+      // ✅ Timezone: Singapore/Philippines (UTC+8)
+      const now = new Date();
+      const options = {
+        timeZone: 'Asia/Manila',
+        dateStyle: 'long',
+        timeStyle: 'short',
+      };
+      const date = now.toLocaleDateString('en-US', options);
+      const time = now.toLocaleTimeString('en-US', options);
+
+      const message =
+        action === 'in'
+          ? `_ _ 
+╭・₊˚        time in          ˚₊·╮
+<:heartplanet:1392691341342802022>  welcome staffie ${i.user} 
+<:girly_calendar:1383759986894573689> date: ${date}
+<a:clock_brown:1383759959073882274> time: ${time}
+╰・ we're glad to have you today! ♡・╯
+_ _`
+          : `_ _
+╭・₊˚        time out         ˚₊·╮
+<a:cat_cryTearsSad:1376537125926993970>  byebye ${i.user} 
+<:pastelhearts:1392482470490013806> date: ${date}
+<a:pinkzzz:1392482465762775090> time: ${time}
+╰・  sleep well, see you later!   ♡・╯
+_ _`;
+
+      if (targetChannel.type === ChannelType.GuildForum) {
+        await targetChannel.threads.create({
+          name: `${i.user.username} time ${action}`,
+          message: { content: message },
+        });
+      } else {
+        await targetChannel.send({ content: message });
+      }
+
+      await i.reply({ content: `Logged your time ${action} in your channel!`, ephemeral: true });
+    });
+  },
+};
+
+------
+
+nb-drop.js
+const { 
+  SlashCommandBuilder, 
+  PermissionFlagsBits, 
+  ModalBuilder, 
+  TextInputBuilder, 
+  TextInputStyle, 
+  ActionRowBuilder 
+} = require("discord.js");
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName("drop")
+    .setDescription("Privately send a dropped order to a user via DM")
+    .addUserOption(option =>
+      option.setName("user")
+        .setDescription("The user to send the order to")
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option.setName("item")
+        .setDescription("The item name")
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option.setName("quantity")
+        .setDescription("The quantity")
+        .setRequired(true)
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  async execute(interaction) {
+    const ownerId = "718779924059521075";
+    if (interaction.user.id !== ownerId) {
+      return interaction.reply({
+        content: "Only ownie can use this command. Better luck next time!",
+        ephemeral: true
+      });
+    }
+
+    const user = interaction.options.getUser("user");
+    const item = interaction.options.getString("item");
+    const quantity = interaction.options.getString("quantity");
+
+    const modal = new ModalBuilder()
+      .setCustomId(`dropnb-modal-${user.id}`)
+      .setTitle("Enter Order Details");
+
+    const detailsInput = new TextInputBuilder()
+      .setCustomId("details")
+      .setLabel("Full order details")
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
+
+    const row = new ActionRowBuilder().addComponents(detailsInput);
+    modal.addComponents(row);
+
+    await interaction.showModal(modal);
+
+    try {
+      const submitted = await interaction.awaitModalSubmit({
+        filter: (i) => i.customId === `dropnb-modal-${user.id}` && i.user.id === ownerId,
+        time: 5 * 60 * 1000
+      });
+
+      await submitted.deferReply({ ephemeral: true });
+
+      const details = submitted.fields.getTextInputValue("details");
+
+      const messageContent =
+`** **
+         <a:lovenote:1392482282186477660>  **𝓃𝒾𝒻𝑒𝒾'𝓈 𝒹𝑒𝓁𝒾𝓋𝑒𝓇𝓎**  
+   ‿︵‿︵‿︵‿︵‿୨ ୧‿︵‿︵‿︵‿︵‿
+
+<:pinkstar:1392690384840429568>   thank you so much for your purcheez
+𐔌   .  ⋮ [read rules here](https://discord.com/channels/1324994277058547772/1324997996810735667)  .ᐟ  ֹ   ₊ ꒱ 
+
+    ꒰ ${quantity} , ${item}  ꒱  
+
+${details}
+
+__n.basket__ : https://discord.gg/B6YG7s9ABa
+
+<:sparklepink:1392482229468397639>   do vouch within 12 hours only .ᐟ
+<:sparklepink:1392482229468397639>   claiming time within 10 minutes to avoid issues
+<:sparklepink:1392482229468397639>   strictly  no  claimed  warranty .ᐟ
+<:sparklepink:1392482229468397639>   void warr if did not vouch
+within    the    given   time
+  
+** **
+do vouch with a screenshot that you received it.
+   
+** **
+どうもありがとうございます。`;
+
+      await user.send(messageContent);
+
+      const owner = await interaction.client.users.fetch(ownerId);
+      await owner.send(`(Copy of message sent to ${user.tag})\n\n${messageContent}`);
+
+      await submitted.editReply({ content: `Successfully sent ordie/s to ${user.tag}.` });
+
+    } catch (err) {
+      console.error("Modal error:", err);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: "Oops! Modal submission failed or timed out.", ephemeral: true });
+      } else {
+        await interaction.reply({ content: "Oops! Modal submission failed or timed out.", ephemeral: true });
+      }
+    }
+  }
+};
+
+------
+
+open.js
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('open')
+        .setDescription('Sends the open message'),
+    async execute(interaction) {
+        await interaction.reply({ 
+            content: 'Sending open message...', 
+            ephemeral: true 
+        });
+
+        await interaction.channel.send(
+            `## nifei basket is now __open!__ <a:pinkstars:1392482339698905140>
+<:heartpinkdot:1392482235709526026>  check our daily sales here
+<:blackheart:1392690372068769842>  check the prices at pricelist category
+<:heartpinkdot:1392482235709526026>  ask / inqurie first before creating a ticket
+<:blackheart:1392690372068769842>  make sure to read the rules
+
+        𝒽𝒶𝓅𝓅𝓎 𝓈𝒽𝑜𝓅𝓅𝒾𝓃𝑔  <:pinkbasket:1392482488894488728>
+
+                 ⋅˚₊‧ ୨୧ ‧₊˚ ⋅
+_ _`
+        );
+    },
+};
+
+------
+
+pay.js
+const { 
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder
+} = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('pay')
+    .setDescription('Sends payment details'),
+
+  async execute(interaction) {
+    const staffLogChannelId = "1420021104910663712";
+    const { channel, client } = interaction;
+
+    await interaction.reply({ 
+      content: "Payment ToS sent successfully.", 
+      ephemeral: true 
+    });
+
+    const tosEmbed = new EmbedBuilder()
+      .setTitle("By proceeding, you agree to our payment terms and conditions")
+      .setDescription(
+        "<:55455pinkdeco:1409159616532582450> No cancellation allowed once order is being processed\n" +
+        "<:55455pinkdeco:1409159616532582450> Overpayments are non-refundable and treated as tips\n" +
+        "By clicking the <a:n_check:1405809061957468190> button, you agree to our [ToS](https://discord.com/channels/1374698926808104970/1374698928569847844)"
+      )
+      .setImage("https://media.discordapp.net/attachments/1374698930733846557/1411909838874607627/image.png")
+      .setColor("#ff9ccd");
+
+    const tosRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('agree')
+        .setEmoji('1405809061957468190')
+        .setStyle(ButtonStyle.Secondary)
+    );
+
+    const tosMessage = await interaction.channel.send({ 
+      embeds: [tosEmbed], 
+      components: [tosRow] 
+    });
+
+    const tosCollector = tosMessage.createMessageComponentCollector({
+      filter: i => i.customId === 'agree',
+      time: 0
+    });
+
+    tosCollector.on('collect', async i => {
+      if (i.customId === 'agree') {
+        await i.reply({ content: `I, ${i.user}, agree.` });
+
+        const disabledRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('agree')
+            .setEmoji('1405809061957468190')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true)
+        );
+        await tosMessage.edit({ components: [disabledRow] });
+
+        const payEmbed = new EmbedBuilder()
+          .setTitle("Choose Your Payment Method")
+          .setDescription(
+            "Select one of the options below to proceed with payment.\n" +
+            "<:9197blackstar:1409159468574314628> GCash\n" +
+            "<:9197blackstar:1409159468574314628> PayPal (with additional fee : 12%)"
+          )
+          .setImage("https://media.discordapp.net/attachments/1374698930733846557/1411909838874607627/image.png")
+          .setColor("#ff9ccd");
+
+        const payRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('gcash')
+            .setLabel("GCash")
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId('paypal')
+            .setLabel("PayPal")
+            .setStyle(ButtonStyle.Secondary)
+        );
+
+        const payMessage = await interaction.channel.send({ 
+          embeds: [payEmbed], 
+          components: [payRow] 
+        });
+
+        const payCollector = payMessage.createMessageComponentCollector({
+          filter: i => i.customId === 'gcash' || i.customId === 'paypal',
+          time: 0
+        });
+
+        payCollector.on('collect', async i => {
+          if (i.customId === 'gcash') { 
+            const gcashEmbed = new EmbedBuilder() 
+            .setTitle("GCash Payment") 
+            .setDescription( "<a:5247pinkbow1:1409159463520174263> send proof of payment/receipt once done\n" 
+              + "<a:5247pinkbow1:1409159463520174263> do not send it with protection\n" 
+              + "<a:5247pinkbow1:1409159463520174263> no to downloaded receipt\n\n" 
+              + "﹒⌗﹒gcash — バスケ ⸝⸝\n ۶ৎ 0915 489 6255 : V.F.D" ) 
+              .setImage("https://media.discordapp.net/attachments/1374698930733846557/1411909857996705852/image.png") 
+              .setColor("#ff9ccd"); await i.reply({ embeds: [gcashEmbed], ephemeral: true }); }
+              
+              if (i.customId === 'paypal') { const paypalEmbed = new EmbedBuilder()
+               .setTitle("PayPal Payment")
+               .setDescription( "<a:5247pinkbow1:1409159463520174263> send proof of payment/receipt once done\n" 
+                + "<a:5247pinkbow1:1409159463520174263> include PayPal fee (12%)\n\n" 
+                + "﹒⌗﹒paypal — バスケ ⸝⸝\n ۶ৎ vfayedd@gmail.com" ) 
+                .setColor("#ff9ccd"); await i.reply({ 
+                  embeds: [paypalEmbed], ephemeral: true }); }
+
+          await i.followUp({
+            content: "Please send your **payment proof screenshot** in this ticket. You have **12 hours** to submit.",
+            ephemeral: true
+          });
+
+          const filter = (m) => m.author.id === i.user.id;
+          const collector = channel.createMessageCollector({ filter, time: 12 * 60 * 60 * 1000 });
+
+          let lastStaffLogMessage = null;
+
+          const handleProof = async (m) => {
+            const staffLogChannel = client.channels.cache.get(staffLogChannelId);
+            if (!staffLogChannel) return;
+
+            const attachment = m.attachments.first();
+
+            if (attachment && attachment.contentType && attachment.contentType.startsWith("image/")) {
+              const embed = new EmbedBuilder()
+                .setTitle("<a:79705bow:1409159620915630150> Payment Proof Submitted")
+                .addFields(
+                  { name: "User", value: `${i.user.tag} (${i.user.id})`, inline: false },
+                  { name: "Ticket", value: `${channel.name}`, inline: false }
+                )
+                .setImage(attachment.url)
+                .setColor("Gold")
+                .setTimestamp();
+
+              const actionRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                  .setCustomId(`accept_${i.user.id}`)
+                  .setLabel("✅ Accept")
+                  .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                  .setCustomId(`decline_${i.user.id}`)
+                  .setLabel("❌ Decline")
+                  .setStyle(ButtonStyle.Danger)
+              );
+
+              if (lastStaffLogMessage) {
+                await lastStaffLogMessage.edit({ embeds: [embed], components: [actionRow] });
+              } else {
+                lastStaffLogMessage = await staffLogChannel.send({ embeds: [embed], components: [actionRow] });
+              }
+
+              await i.followUp({ 
+                content: `${i.user}, your payment proof has been submitted and logged for staff review.`, 
+                ephemeral: true 
+              });
+            } else {
+              await i.followUp({ 
+                content: `${i.user}, Please upload a valid **image screenshot** as proof of payment.`, 
+                ephemeral: true 
+              });
+            }
+          };
+
+          collector.on("collect", handleProof);
+
+          client.on("interactionCreate", async (btn) => {
+            if (!btn.isButton()) return;
+
+            if (btn.customId === `accept_${i.user.id}`) {
+              await btn.update({ components: [] }); 
+              await channel.send(`${i.user}, 
+## <a:nif_pinkverify:1392690355974963301>  — payment received !
+    track your order status <#1325000933792550914> 
+
+  <:no:1392690399465705542> no rush orders pls | usual eta : mins - one day unless stated
+  <:yes:1392690367190798398> kindly wait for us patiently to process your order
+
+<:kuromilaying:1392482497245352019> **thank you for shopping at n.basket**`);
+            }
+
+            if (btn.customId === `decline_${i.user.id}`) {
+              await btn.update({ components: [] }); 
+              await channel.send(`${i.user}, Your payment proof was declined. Please resend a valid **image screenshot**.`);
+
+              const retryCollector = channel.createMessageCollector({
+                filter: (m) => m.author.id === i.user.id,
+                time: 12 * 60 * 60 * 1000
+              });
+
+              retryCollector.on("collect", async (m) => {
+                const attachment = m.attachments.first();
+                if (attachment && attachment.contentType && attachment.contentType.startsWith("image/")) {
+                  await channel.send(`${i.user}, New payment proof received. Waiting for staff review again.`);
+                  await handleProof(m);
+                  retryCollector.stop("new_proof");
+                } else {
+                  await channel.send(`${i.user}, Only image screenshots are allowed for resubmission.`);
+                }
+              });
+            }
+          });
+
+        });
+      }
+    });
+  },
+};
+
+------
+
+ping.js
+
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('ownie')
+        .setDescription('Replies with info about the owner.'),
+    async execute(interaction) {
+        
+        await interaction.reply({ 
+            content: 'Getting info...', 
+            ephemeral: true 
+        });
+        await interaction.channel.send(
+            `looking for <@718779924059521075> <:kuromiquestion:1392482319490748539>\n
+she is either resting, studying, or watching anime,\n
+kindly wait patiently for her response, ありがとう`
+        );
+    },
+};
+
+------
+
+queue.js
+const {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType
+} = require('discord.js');
+const crypto = require('crypto');
+
+const serverConfigs = {
+  "1324994277058547772": {
+    categories: {
+      processing: "1382972149756723320",
+      done: "1375813346502381608"
+    },
+    allowedRoles: [
+      "1325002305845858355",
+      "1372403509370163250",
+      "1382945288343388282",
+    ],
+    staffLogChannelId: "1420021104910663712",
+    customerRoleId: "1395700998982602883"
+  },
+
+  "1374698926808104970": {
+    categories: {
+      processing: "1383306295213555722",
+      done: "1383307197630386279"
+    },
+    allowedRoles: [
+      "1374698926837338112",
+      "1374698926808104977"
+    ],
+    staffLogChannelId: "1419996241047060604",
+    customerRoleId: "1408079511576121446"
+  }
+};
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('queue')
+    .setDescription('Place an order in the queue')
+    .addStringOption(opt => opt.setName('item').setDescription('Item name').setRequired(true))
+    .addStringOption(opt => opt.setName('quantity').setDescription('Quantity / Months').setRequired(true))
+    .addStringOption(opt => opt.setName('price').setDescription('Price (e.g. 250 or 250.00)').setRequired(true))
+    .addUserOption(opt => opt.setName('customer').setDescription('Customer').setRequired(true))
+    .addChannelOption(opt => opt.setName('channel').setDescription('Buyer channel').setRequired(true))
+    .addChannelOption(opt => opt.setName('queue_channel').setDescription('Queue channel').setRequired(true))
+    .addStringOption(opt => opt.setName('mop').setDescription('Mode of payment').setRequired(true)),
+
+  async execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+
+    const guildId = interaction.guild.id;
+    const config = serverConfigs[guildId];
+
+    if (!config) {
+      return interaction.editReply({
+        content: "⚠️ This server isn't configured for the queue system yet.",
+      });
+    }
+
+    const { categories, allowedRoles, staffLogChannelId, customerRoleId } = config;
+
+    const item = interaction.options.getString('item');
+    const quantity = interaction.options.getString('quantity');
+    const price = interaction.options.getString('price');
+    const customerUser = interaction.options.getUser('customer');
+    const customerName = customerUser.username;
+    const targetChannel = interaction.options.getChannel('channel');
+    const queueChannel = interaction.options.getChannel('queue_channel');
+    const mop = interaction.options.getString('mop');
+
+    const transactionId = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const buyerChannelMention = `<#${targetChannel.id}>`;
+
+    const buildQueueMessage = (statusText, claimedBy) => {
+      return `_ _
+_   _ <a:exclaim:1419987771325550642> **𝓷𝓮𝔀 𝓸𝓻𝓭𝒆𝓻 𐔌՞. .՞𐦯**
+
+placed by <@${customerUser.id}>
+<:kuromicellphone:1392691338671161504> claimed by : ${claimedBy}
+
+${statusText}
+⤿ <:sparklepink:1392482229468397639> ${buyerChannelMention}
+
+<:pinkbasket:1392482488894488728> ordie ༝ ❝ ${quantity} ❞ ꕀ **${item}**
+⤿ <:kuromicute:1392690377907245186> mop ⦂ __ ${mop} __, ₱ ${price}
+⭑ <a:pinkstar:1392482351849672824> transaction id: \`${transactionId}\`
+
+thank you for ordering at n.basket ♡
+
+꒷ <a:catheartbounce:1392482260833534073>   ⋆｡ 𖦹  <a:blackheart:1392482285206634579>   ๋࣭ ⭑ <:neonhearts:1392482328038608956>  .ᐟ ありがとう
+`;
+    };
+
+    let currentStatusText = '<a:pinkmail:1326785584512897044> **ORDER IN QUEUE**';
+    let currentClaimedBy = 'none';
+
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId('queue_status')
+      .setPlaceholder('Update order status')
+      .addOptions([
+        { label: 'Queue', value: 'queue', emoji: { id: '1326785584512897044', animated: true } },
+        { label: 'Processing', value: 'processing', emoji: { id: '1392482506543992882', animated: true } },
+        { label: 'Sent', value: 'sent', emoji: { id: '1392690361931006053', animated: true } },
+      ]);
+
+    const row = new ActionRowBuilder().addComponents(menu);
+
+    const sentMessage = await queueChannel.send({
+      content: buildQueueMessage(currentStatusText, currentClaimedBy),
+      components: [row],
+    });
+    const copyMessage = await interaction.channel.send({
+      content: buildQueueMessage(currentStatusText, currentClaimedBy),
+    });
+
+    if (targetChannel) {
+      await targetChannel.send(
+        `## order noted ! <a:pawblack:1392690783194316932>\nkindly wait for ownie or staffie to process your order\nthankies <a:pinkheart:1392482244815360072>`
+      );
+    }
+
+    interaction.client.queueMap = interaction.client.queueMap || new Map();
+    interaction.client.queueMap.set(targetChannel.id, {
+      transactionId,
+      queueChannelId: queueChannel.id,
+      queueMessageId: sentMessage.id,
+      copyChannelId: interaction.channel.id,
+      copyMessageId: copyMessage.id,
+      buyerChannelId: targetChannel.id,
+      item,
+      quantity,
+      customerId: customerUser.id,
+    });
+
+    const selectCollector = sentMessage.createMessageComponentCollector({
+      componentType: ComponentType.StringSelect,
+      time: 0,
+    });
+
+    selectCollector.on('collect', async (selectInt) => {
+      try {
+        if (!allowedRoles.some(r => selectInt.member.roles.cache.has(r))) {
+          return selectInt.reply({ content: "❌ You don't have permission to update this order.", ephemeral: true });
+        }
+
+        if (currentClaimedBy === 'none') currentClaimedBy = `<@${selectInt.user.id}>`;
+
+        const choice = selectInt.values[0];
+        const guildCategories = categories;
+        const queueInfo = interaction.client.queueMap.get(targetChannel.id);
+        const buyerChannel = selectInt.guild.channels.cache.get(queueInfo?.buyerChannelId) || targetChannel;
+
+        if (!buyerChannel) {
+          return selectInt.reply({ content: "Buyer channel missing. Cannot update order.", ephemeral: true });
+        }
+
+        if (choice === 'queue') {
+          currentStatusText = '<a:pinkmail:1326785584512897044> **ORDER IN QUEUE**';
+          await buyerChannel.setName(`${quantity}-${item}。${customerName}`.toLowerCase().replace(/\s+/g, '-')).catch(() => {});
+        } 
+        else if (choice === 'processing') {
+          currentStatusText = '<a:vinylrecord:1392482506543992882> **ORDER IS PROCESSING**';
+          await buyerChannel.send(
+            `## processing your ordie ${customerUser.toString()} ... <a:vinylrecord:1392482506543992882>\nplease wait a moment as we prepare your ordie ... <a:cat:1392691104335532073>`
+          ).catch(() => {});
+          if (guildCategories?.processing && buyerChannel.parentId !== guildCategories.processing) {
+            await buyerChannel.setParent(guildCategories.processing, { lockPermissions: false }).catch(() => {});
+          }
+        } 
+        else if (choice === 'sent') {
+          currentStatusText = '<a:pinkheartsu:1392690361931006053> **ORDER SENT**';
+          await buyerChannel.setName(`done-no-vouch。${customerName}`.toLowerCase().replace(/\s+/g, '-')).catch(() => {});
+          if (guildCategories?.done && buyerChannel.parentId !== guildCategories.done) {
+            await buyerChannel.setParent(guildCategories.done, { lockPermissions: false }).catch(() => {});
+          }
+
+          const guildMember = await selectInt.guild.members.fetch(customerUser.id).catch(() => null);
+          if (guildMember && !guildMember.roles.cache.has(customerRoleId)) {
+            await guildMember.roles.add(customerRoleId).catch(() => {});
+          }
+
+          const sentTimestampSec = Math.floor(Date.now() / 1000);
+          const vouchDeadlineSec = sentTimestampSec + 12 * 60 * 60;
+          const vouchLink = "https://discord.com/channels/1374698926808104970/1374698930301829151";
+          const feedbackLink = "https://discord.com/channels/1374698926808104970/1374698930301829154";
+
+          const sentMsgContent = `_ _
+## <a:pinkheartsu:1392690361931006053> — order sent !
+thank you so much for trusting <:kuromibow:1392482316701401088>
+
+        ⋅˚₊‧ ୨୧ ‧₊˚ ⋅
+
+<:heartpinkdot:1392482235709526026> don't forget to vouch to activate warranty
+<:heartpinkdot:1392482235709526026> did not vouch within the given time : __void warranty__
+
+      𝓉𝒾𝓁𝓁 𝑜𝓊𝓇 𝓃𝑒𝓍𝓉 𝓉𝓇𝒶𝓃𝓈𝒶𝒸𝓉𝒾𝓸𝓃 ! <a:alternativestars:1392690764630331602>
+
+    follow vouch format <a:pinkstarue:1392690778035192000>
+
+**/vouch quantity:${quantity} item:${item}**
+
+__please insert a screenshot or proof of login__
+
+feedbacks are also appreciated ! <a:cat:1392691104335532073>
+
+ordie sent on: <t:${sentTimestampSec}:F>
+time left to vouch: <t:${vouchDeadlineSec}:R> 
+
+${customerUser.toString()} ありがとうございます!
+`;
+          const buttonRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setLabel('Leave a Vouch').setStyle(ButtonStyle.Link).setURL(vouchLink),
+            new ButtonBuilder().setLabel('Give Feedback').setStyle(ButtonStyle.Link).setURL(feedbackLink)
+          );
+
+          await buyerChannel.send({ content: sentMsgContent, components: [buttonRow] }).catch(() => {});
+        }
+
+        const updatedMsg = buildQueueMessage(currentStatusText, currentClaimedBy);
+        await selectInt.update({ content: updatedMsg, components: choice === 'sent' ? [] : [row] });
+
+        if (queueInfo) {
+          const copyChannel = selectInt.guild.channels.cache.get(queueInfo.copyChannelId);
+          if (copyChannel) {
+            const copyMsg = await copyChannel.messages.fetch(queueInfo.copyMessageId).catch(() => null);
+            if (copyMsg) await copyMsg.edit({ content: updatedMsg });
+          }
+        }
+
+        const logChannel = selectInt.guild.channels.cache.get(staffLogChannelId);
+        if (logChannel) logChannel.send(`Order ${transactionId} updated to **${choice.toUpperCase()}** by ${selectInt.user.tag}`);
+      } catch (err) {
+        console.error("Error updating order:", err);
+        await selectInt.followUp({ content: "⚠️ There was an error updating the order.", ephemeral: true }).catch(() => {});
+      }
+    });
+
+    await interaction.editReply({ content: 'Order queued and staff notified.' });
+  },
+};
+
+------
+
+rbxgift.js
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('gift')
+        .setDescription('Sends a form for roblox gifting.'),
+    async execute(interaction) {
+        await interaction.reply({ 
+            content: 'form sent sucessfully!', 
+            ephemeral: true 
+        });
+
+        await interaction.channel.send(
+            `**robux via gifting**
+    <:blackheartdot:1392482240327454801> username : 
+    <:blackheartdot:1392482240327454801> game name :
+    <:blackheartdot:1392482240327454801> specific item to gift :
+    <:blackheartdot:1392482240327454801> make sure this game does not require levels to gift`
+        );
+    },
+};
+
+------
+
+rbxgpass.js
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('gpass')
+        .setDescription('Sends a guide for roblox gamepass.'),
+    async execute(interaction) {
+
+        await interaction.reply({ 
+            content: 'guide sent sucessfully!', 
+            ephemeral: true 
+        });
+
+        await interaction.channel.send(
+            `**for rbx via gamepass <:glowyheart:1392482309684334664> **
+
+            *go to https://create.roblox.com/creations and follow the steps : *
+<:lightpinksmalldot:1392690352221061130> click mo place mo
+<:lightpinksmalldot:1392690352221061130>finances > monetization > passes :
+ <:indent:1377145636494901308> create a pass
+ <:indent:1377145636494901308> once created, click the pass then go to sales 
+ <:indent:1377145636494901308> turn on item for sale then input robux amount, also disable regional pricing
+
+*after that, go to the roblox website and follow the steps : *
+<:lightpinksmalldot:1392690352221061130> profile > view profile > creation > experience (pindutin mo ung place mo) > scroll down the "store" and find the gamepass you created
+<:lightpinksmalldot:1392690352221061130> copy the link`
+        );
+    },
+};
+
+------
+
+say.js
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('say')
+    .setDescription('Send a custom message')
+    .addStringOption(option =>
+      option.setName('message')
+        .setDescription('The message you want the bot to send')
+        .setRequired(true)
+    )
+    .addAttachmentOption(option =>
+      option.setName('image')
+        .setDescription('Optional image to attach')
+        .setRequired(false)
+    ),
+
+  async execute(interaction) {
+    const message = interaction.options.getString('message');
+    const image = interaction.options.getAttachment('image');
+
+    await interaction.deferReply({ flags: 64 });
+
+    const payload = { content: message };
+    if (image) {
+      payload.files = [image];
+    }
+
+    await interaction.channel.send(payload);
+
+    await interaction.editReply('<a:79705bow:1409159620915630150> message sent!');
+  },
+};
+
+------
+
+vouch.js
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('vouch')
+    .setDescription('Leave a vouch for the shop, vouching activates your purchase warranty!')
+    .addIntegerOption(option =>
+      option.setName('quantity')
+        .setDescription('Quantity purchased')
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option.setName('item')
+        .setDescription('Item purchased')
+        .setRequired(true)
+    )
+    .addAttachmentOption(option =>
+      option.setName('screenshot1')
+        .setDescription('Upload proof screenshot #1')
+        .setRequired(true)
+    )
+    .addAttachmentOption(option =>
+      option.setName('screenshot2')
+        .setDescription('Upload proof screenshot #2 (optional)')
+        .setRequired(false)
+    )
+    .addAttachmentOption(option =>
+      option.setName('screenshot3')
+        .setDescription('Upload proof screenshot #3 (optional)')
+        .setRequired(false)
+    ),
+
+  async execute(interaction) {
+    const quantity = interaction.options.getInteger('quantity');
+    const item = interaction.options.getString('item');
+
+    const screenshots = [
+      interaction.options.getAttachment('screenshot1'),
+      interaction.options.getAttachment('screenshot2'),
+      interaction.options.getAttachment('screenshot3')
+    ].filter(Boolean);
+
+    const ownerUser = '<@718779924059521075>'; 
+    const staffieRole = '<@&1374698926808104977>'; 
+    const mentionUser = `<@${interaction.user.id}>`;
+
+    const mainEmbed = new EmbedBuilder()
+      .setTitle("<a:exclaim:1419987771325550642> New Vouchie!")
+      .setDescription(`${mentionUser} loves ${ownerUser} and ${staffieRole} for **${quantity} ${item}** : #nifeidbacks`)
+      .setColor(0xFFC0CB)
+      .setThumbnail(interaction.user.displayAvatarURL())
+      .setImage(screenshots[0].url)
+      .setFooter({ text: `Vouchie submitted by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
+      .setTimestamp();
+
+    const embeds = [mainEmbed];
+    if (screenshots[1]) {
+      embeds.push(
+        new EmbedBuilder()
+          .setColor(0xFFC0CB)
+          .setImage(screenshots[1].url)
+      );
+    }
+    if (screenshots[2]) {
+      embeds.push(
+        new EmbedBuilder()
+          .setColor(0xFFC0CB)
+          .setImage(screenshots[2].url)
+      );
+    }
+
+    const vouchChannel = interaction.guild.channels.cache.get("1374698930301829151");
+    if (vouchChannel) {
+      await vouchChannel.send({ embeds });
+    }
+
+    await interaction.reply({
+      content: "Your vouchie has been submitted with screenshots. Come again soon~",
+      flags: [MessageFlags.Ephemeral]
+    });
+  }
+};
+
+------
+
+vouchdone.js
+const { 
+    SlashCommandBuilder, 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle, 
+    PermissionFlagsBits 
+} = require('discord.js');
+
+const STAFF_LOG_CHANNEL_ID = '1420021104910663712';
+const NO_VOUCH_ROLE_ID = '1395700998982602883';
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('dv')
+        .setDescription('Send a done vouch prompt to customers.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+
+    async execute(interaction) {
+        await interaction.reply({
+            content: 'done voucheez button is sent!',
+            ephemeral: true,
+        });
+
+        const vouchButton = new ButtonBuilder()
+            .setCustomId('done_vouch')
+            .setLabel('click me if you are done vouching')
+            .setStyle(ButtonStyle.Secondary);
+
+        const row = new ActionRowBuilder().addComponents(vouchButton);
+
+        const message = await interaction.channel.send({
+            content:
+                '_ _ \n\n' +
+                '-# thank you so much for trusting us, until next time!\n' +
+                '-# **make sure to click the button below after vouching to complete your transaction!**\n\n',
+            components: [row],
+        });
+
+        const collector = message.createMessageComponentCollector({ time: 12 * 60 * 60 * 1000 });
+        let vouchClicked = false;
+
+        collector.on('collect', async (i) => {
+            if (i.customId === 'done_vouch') {
+                const member = await i.guild.members.fetch(i.user.id);
+
+                if (!member.roles.cache.has(NO_VOUCH_ROLE_ID)) {
+                    await i.deferReply({ ephemeral: true });
+                    return i.followUp({ content: 'You do not have a No Vouch role.', ephemeral: true });
+                }
+
+                await i.deferUpdate();
+                await i.followUp({
+                    content: 'Your vouch is logged and will be reviewed by the staffs, thank you for trusting!',
+                    ephemeral: false,
+                });
+
+                const staffChannel = await i.guild.channels.fetch(STAFF_LOG_CHANNEL_ID);
+                if (staffChannel) {
+                    const agreeButton = new ButtonBuilder()
+                        .setCustomId(`agree_${member.id}_${interaction.channel.id}`)
+                        .setLabel('accept')
+                        .setStyle(ButtonStyle.Success);
+
+                    const declineButton = new ButtonBuilder()
+                        .setCustomId(`decline_${member.id}_${interaction.channel.id}`)
+                        .setLabel('revouch / decline')
+                        .setStyle(ButtonStyle.Danger);
+
+                    const reviewRow = new ActionRowBuilder().addComponents(agreeButton, declineButton);
+
+                    await staffChannel.send({
+                        content: `_ _ \n <a:93288jellowobble:1384506812187021466> <@${member.id}> clicked Done Vouch.\nReact accordingly below:`,
+                        components: [reviewRow],
+                    });
+                }
+
+                vouchClicked = true;
+                collector.stop('vouched');
+            }
+        });
+
+        collector.on('end', async (_, reason) => {
+            if (!vouchClicked && reason !== 'vouched') {
+                const staffChannel = await interaction.guild.channels.fetch(STAFF_LOG_CHANNEL_ID);
+                if (staffChannel) {
+                    staffChannel.send('<:nifei_wrong:1384506679571255447> Voided: Customer did not vouch within 12 hours.');
+                }
+            }
+        });
+    },
+};
+
+module.exports.handleButton = async (interaction) => {
+  if (interaction.customId.startsWith('agree_') || interaction.customId.startsWith('decline_')) {
+    const parts = interaction.customId.split('_');
+    const action = parts[0];
+    const userId = parts[1];
+    const channelId = parts[2];
+
+    const member = await interaction.guild.members.fetch(userId).catch(() => null);
+    if (!member) {
+      await interaction.deferReply({ ephemeral: true });
+      return interaction.followUp({ content: 'User not found in the server.', ephemeral: true });
+    }
+
+    await interaction.deferUpdate();
+
+    const targetChannel = channelId
+      ? await interaction.guild.channels.fetch(channelId).catch(() => null)
+      : null;
+
+    if (action === 'agree') {
+      await member.roles.remove(NO_VOUCH_ROLE_ID).catch(console.error);
+
+      if (targetChannel) {
+        const safeName = member.user.username.replace(/[^a-zA-Z0-9_-]/g, '');
+        await targetChannel.setName(`done-w-vouch。${safeName}`).catch(console.error);
+        await targetChannel.send({
+          content: `<a:nif_pinkverify:1392690355974963301> <@${member.id}> your vouch has been **accepted**! Thank you for completing your transaction ❤️`,
+        });
+      }
+
+      await interaction.message.edit({
+        content: `✅ Accepted vouch from <@${userId}>.`,
+        components: [],
+      });
+
+      await interaction.followUp({
+        content: `✅ Accepted vouch from <@${userId}>. Channel renamed and No Vouch role removed.`,
+        ephemeral: true,
+      });
+    }
+
+    else if (action === 'decline') {
+      if (targetChannel) {
+        await targetChannel.send({
+          content: `<:nifei_wrong:1384506679571255447> <@${member.id}> your vouch has been **declined** or needs a **revouch**. Please redo your vouch correctly.`,
+        });
+      }
+
+      await member
+        .send('Your vouch was declined or needs to be redone. Please revouch to complete your transaction.')
+        .catch(() => {});
+
+      await interaction.followUp({
+        content: `⚠️ Declined / revouch notice sent to <@${userId}>.`,
+        ephemeral: true,
+      });
+    }
+  }
+};
+
+------
+
+warn.js
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+
+const dbFile = path.join(__dirname, "warnings.json");
+
+function loadWarnings() {
+  if (!fs.existsSync(dbFile)) {
+    fs.writeFileSync(dbFile, JSON.stringify({}, null, 2));
+  }
+  return JSON.parse(fs.readFileSync(dbFile, "utf8"));
+}
+
+function saveWarnings(data) {
+  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
+}
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName("warn")
+    .setDescription("Issue a warning or void notice to a user")
+    .addStringOption(option =>
+      option.setName("date")
+        .setDescription("The date of the incident")
+        .setRequired(true)
+    )
+    .addUserOption(option =>
+      option.setName("user")
+        .setDescription("The user being warned")
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option.setName("status")
+        .setDescription("Warning type: Warning or Voided")
+        .setRequired(true)
+        .addChoices(
+          { name: "Warning", value: "Warning" },
+          { name: "Voided", value: "Voided" }
+        )
+    )
+    .addStringOption(option =>
+      option.setName("item")
+        .setDescription("The item name")
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option.setName("offense")
+        .setDescription("The offense committed")
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option.setName("transactionid")
+        .setDescription("The transaction ID")
+        .setRequired(true)
+    ),
+
+  async execute(interaction) {
+    const date = interaction.options.getString("date");
+    const user = interaction.options.getUser("user");
+    const status = interaction.options.getString("status");
+    const item = interaction.options.getString("item");
+    const offense = interaction.options.getString("offense");
+    const transactionId = interaction.options.getString("transactionid");
+
+    const warnings = loadWarnings();
+    if (!warnings[user.id]) warnings[user.id] = [];
+
+    // Count warnings (only those with status "Warning")
+    const userWarnings = warnings[user.id].filter(w => w.status === "Warning");
+    let warningLabel = "";
+    if (status === "Warning") {
+      const count = userWarnings.length + 1;
+      if (count === 1) warningLabel = "(First Warning)";
+      else if (count === 2) warningLabel = "(Second Warning)";
+      else warningLabel = "(Final Warning)";
+    }
+
+    const newWarning = {
+      date,
+      status,
+      item,
+      offense,
+      transactionId,
+      warningLabel,
+      issuedBy: interaction.user.id,
+    };
+    warnings[user.id].push(newWarning);
+    saveWarnings(warnings);
+
+    const embed = new EmbedBuilder()
+      .setDescription(
+        `𐔌   .  ${date} ⋮ **${status.toUpperCase()} ${warningLabel} !**
+
+<:blackheartdot:1392482240327454801>   **user :** ${user}
+<:heartpinkdot:1392482235709526026>   **item :** ${item}
+<:blackheartdot:1392482240327454801>   **reason :** ${offense}
+<:heartpinkdot:1392482235709526026>   **transaction id :** ${transactionId}
+
+this decision is final and non-negotiable.  
+any appeals, dms , reports, and re-vouch  
+will not be entertained.  
+
+read the rules ! ありがとう`
+      )
+      .setColor(status === "Voided" ? 0xff0000 : 0xffa500)
+      .setTimestamp();
+
+    await interaction.reply({
+      content: "⚠️ Warning issued and saved to database.",
+      ephemeral: true,
+    });
+
+    await interaction.channel.send({ embeds: [embed] });
+  },
+};
+
+------
+
+warnings.json
+{
+  "712288963049553992": [
+    {
+      "date": "September 24, 2025",
+      "status": "Voided",
+      "item": "1m netflix shared",
+      "offense": "no monitoring form sent",
+      "transactionId": "BEB27DAE",
+      "warningLabel": "",
+      "issuedBy": "718779924059521075"
+    }
+  ],
+  "743026489116721183": [
+    {
+      "date": "October 10, 2025",
+      "status": "Voided",
+      "item": "1m crunchyroll solo",
+      "offense": "wrong vouch/no proof of login",
+      "transactionId": "2855A7E6",
+      "warningLabel": "",
+      "issuedBy": "718779924059521075"
+    }
+  ]
+}
+
+------
+
